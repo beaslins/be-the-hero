@@ -28,28 +28,51 @@
  *
  */
 
-const express               = require('express'); // importando um pacote
-const OngController         = require('./controllers/OngController'); // controller das ongs
-const IncidentController    = require('./controllers/IncidentController'); // controller das ongs
-const ProfileController     = require('./controllers/ProfileController');  // controller das ongs
-const SessionController     = require('./controllers/SessionController');  // controller das ongs
+const express                      = require('express'); // importando um pacote
+const {celebrate, Segments, Joi}   = require('celebrate'); // lib de validação
+const OngController                = require('./controllers/OngController'); // controller das ongs
+const IncidentController           = require('./controllers/IncidentController'); // controller das ongs
+const ProfileController            = require('./controllers/ProfileController');  // controller das ongs
+const SessionController            = require('./controllers/SessionController');  // controller das ongs
 
-const routes                = express.Router(); // desaclopando o modulo de rotas do express em uma nova variável
+const routes                       = express.Router(); // desaclopando o modulo de rotas do express em uma nova variável
 
 // Login
 routes.post('/sessions', SessionController.create); // criar uma sessão
 
 // Ongs
 routes.get('/ongs', OngController.index);    // listar
-routes.post('/ongs', OngController.create); // cadastrar
+routes.post('/ongs', celebrate({
+    [Segments.BODY]: Joi.object().keys({
+        name: Joi.string().required(),
+        email: Joi.string().required().email(),
+        whatsapp: Joi.number().required().min(10).max(11),
+        city: Joi.string().required(),
+        uf: Joi.string().required().length(2),
+    })
+}), OngController.create); // cadastrar
 
 // Perfil de Ong
-routes.get('/profile', ProfileController.index);
+routes.get('/profile', celebrate({
+    [Segments.HEADERS]: Joi.object({
+        authorization: Joi.string().required(),
+    }).unknown(),
+}), ProfileController.index);
 
 // Casos
-routes.get('/incidents', IncidentController.index);         // listar
+routes.get('/incidents', celebrate({
+    [Segments.QUERY]: Joi.object().keys({
+        page: Joi.number(),
+    })
+}),IncidentController.index);         // listar
+
 routes.post('/incidents', IncidentController.create);      // cadastrar
-routes.delete('/incidents/:id', IncidentController.delete) // deletar
+
+routes.delete('/incidents/:id', celebrate({
+    [Segments.PARAMS]: Joi.object().keys({
+        id: Joi.number().required(),
+    })
+}),IncidentController.delete) // deletar
 
 
 
