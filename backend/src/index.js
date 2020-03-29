@@ -15,7 +15,10 @@ const routes  = require('./routes'); // quando tem ./ (referenciar a mesma pasta
 const app = express();
 
 // quem pode acessar meu app
-app.use(cors());
+app.use(cors({
+    allowedHeaders: '*',
+    exposedHeaders: '*'
+}));
 
 /**
  * precisa vir antes das rotas, para que o express converta o 
